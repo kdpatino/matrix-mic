@@ -34,7 +34,8 @@ output = []
 theta = []
 steer_vector = []
 
-for a in vector:
+def mag_delay(theta , frequency):
+    for a in vector:
     angle = (a*360*math.pi)/(len(vector)*180) #((360*a/size-1)*(math.pi/180))
     theta.append(angle)
     steer = 0
