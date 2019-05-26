@@ -5,57 +5,68 @@ import numpy as np
 import math
 import cmath
 
+class Board:
+  def __init__(self,name,n_mics,coordinates):
+    self.name = name
+    self.n_mics = n_mics
+    self.coordinates = coordinates
+    self.radius = math.sqrt(coordinates[0]**2 + coordinates[1]**2)/1000
+    self.element_distance = 2.0*self.radius*math.sin(math.pi/n_mics)
+
 fs= 48000
 
 sound_speed = 340
 
-n_mics_creator = 8
-n_mics_voice = 6
+creator = Board("Creator",8,[20.0908795,48.5036755])
+voice = Board("Voice",7,[-38.13,3.58])
 
-CREATOR = [20.0908795,48.5036755]
-VOICE = [-38.13,3.58]
-BOARD = VOICE
-BOARD_radius =  math.sqrt(BOARD[0]**2 + BOARD[1]**2)/1000
+device = creator
 
-n_mics = n_mics_voice
-radius = BOARD_radius
+print(device.name,"interelement spacing:", device.element_distance*1000,"mm")
 
-delta = 2*math.pi*math.sin(np.pi/n_mics)
-angle_s = 0
-def mag_delay(theta , frequency):
+
+def steering_vector(frequency,theta):
   vector = []
-  for f in frequency:
-    acc = []
-    w = 2*math.pi*f
-    for angle in theta:
-      #print("-------------- ",f ,angle*180/math.pi)
-      steer = 0
-      for i in range(0,n_mics):
-        phi_angle = (2.0*math.pi*i)/(n_mics)
-        delta_radius = 2.0*radius*math.sin(math.pi/n_mics)
-        tau_delay =((radius/sound_speed)*math.cos(angle-phi_angle))
-        tau_delay_s =((radius/sound_speed)*math.cos(angle_s-phi_angle))
-        #print(tau_delay*fs)
-        #print(cmath.rect(1,w*tau_delay)*cmath.rect(1,w*tau_delay*-1))
-        steer += cmath.rect(1,w*tau_delay)*cmath.rect(1,w*tau_delay_s*-1)
-      steer += cmath.rect(1,0)
-      steer_abs = abs(steer)/float(n_mics+1)
-      print("---------------",steer,steer_abs)
-      db = 20*math.log10(steer_abs)
-      acc.append(steer_abs)
-    vector.append(acc)
+  w = 2*math.pi*frequency  
+  for i in range(0,device.n_mics):
+    phi_angle = (2.0*math.pi*i)/(device.n_mics)
+    tau_delay =((device.radius/sound_speed)*math.cos(theta-phi_angle))
+    print("---",tau_delay, theta)
+    element = cmath.rect(1,w*tau_delay)
+    vector.append(element)
   return np.asarray(vector)
 
-length = 50
+def delay_sum_filter(frequency,theta,theta_steer):
+  vector = []
+  w = 2*math.pi*frequency  
+  for i in range(0,device.n_mics):
+    phi_angle = (2.0*math.pi*i)/(device.n_mics)
+    tau_delay =((device.radius/sound_speed)*math.cos(theta-phi_angle))
+    element = (1/device.n_mics)*cmath.rect(1,w*tau_delay)
+    vector.append(element)
+  return np.asarray(vector)
+
+def filter_result(frequency,angle,steer_angle):
+  steer_vector = steering_vector(frequency,angle)
+  delay_filter = np.conjugate(delay_sum_filter(frequency,angle,steer_angle))
+  operation = np.multiply(delay_filter,steer_vector)
+  return(operation)
+
+length = 10
 theta = np.linspace(0,2*np.pi,length )
 frequency = np.linspace(10, 10000, length)
-mag = mag_delay(theta,frequency)
+angle_s =0*math.pi/180
+for a in theta:
+  filtered_signal = filter_result(frequency[0],a,angle_s)
+  print(filtered_signal , a)
 
+
+'''
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
 P, F = np.meshgrid(theta,frequency)
-R = mag_delay(theta, frequency)
+R = steering_vector(frequency,theta)
 
 X, Y = R*np.cos(P), R*np.sin(P)
 
@@ -64,3 +75,4 @@ X, Y = R*np.cos(P), R*np.sin(P)
 ax.plot_surface(X,Y,F,rstride=1, cstride=1,
                 cmap='viridis', edgecolor='none')
 plt.show()
+'''
