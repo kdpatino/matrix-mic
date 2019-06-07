@@ -24,7 +24,6 @@ device = creator
 
 print(device.name,"interelement spacing:", device.element_distance*1000,"mm")
 
-
 def steering_vector(frequency,theta):
   vector = []
   w = 2*math.pi*frequency  
@@ -59,7 +58,6 @@ angle_s =0*math.pi/180
 for a in theta:
   filtered_signal = filter_result(frequency[0],a,angle_s)
   print(filtered_signal , a)
-
 
 '''
 fig = plt.figure()
