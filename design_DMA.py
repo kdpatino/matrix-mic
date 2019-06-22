@@ -23,8 +23,6 @@ voice = Board("Voice",7,[-38.13,3.58])
 
 device = voice
 
-#print(phi_vector)
-
 f = 1
 print(device.radius)
 wf =2.0*np.pi*f
@@ -34,7 +32,7 @@ phi_vector = np.linspace(0, 2*np.pi, device.n_mics+1)
 print(phi_vector)
 theta_vector = [0,np.pi/2,2*np.pi/3,np.pi]
 #theta_vector = [0,np.pi/2]
-#A = np.array()
+
 a = []
 for theta in theta_vector:
   r = []
@@ -54,7 +52,6 @@ beta_vector = [1,0,0,0,0,0,0]
 #beta_vector = [1,0,0]
 
 A = np.array(a)
-#print(A)
 A_i = np.linalg.inv(A)
 B = np.transpose(beta_vector)
 H = np.matmul(A_i,B)
@@ -75,11 +72,12 @@ def filter_result(frequency,angle,steer_angle):
   operation = np.matmul(str_T.H,H)
   return(np.asarray(operation))
 
-length = 1000
+length = 100
 theta = np.linspace(0,2*np.pi,length )
 frequency = np.linspace(10, 10000, length)
-
+angle_s = 0
 data = []
+
 for a in theta:
   result =filter_result(f,a,angle_s)
   data.append(20*np.log10(abs(result[0][0])))
